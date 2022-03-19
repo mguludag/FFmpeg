@@ -53,6 +53,7 @@ struct gdigrab {
     int        height;      /**< Height of the grab frame (private option) */
     int        offset_x;    /**< Capture x offset (private option) */
     int        offset_y;    /**< Capture y offset (private option) */
+    int        use_captureblt;    /**< Capture gdi window with CAPTUREBLT flag (private option) */
 
     HWND       hwnd;        /**< Handle of the window for the grab */
     HDC        source_hdc;  /**< Source device context */
@@ -555,6 +556,8 @@ static int gdigrab_read_packet(AVFormatContext *s1, AVPacket *pkt)
 
     int64_t curtime, delay;
 
+    unsigned long flag = SRCCOPY;
+
     /* Calculate the time of the next frame */
     time_frame += INT64_C(1000000);
 
@@ -582,6 +585,9 @@ static int gdigrab_read_packet(AVFormatContext *s1, AVPacket *pkt)
     if (av_new_packet(pkt, file_size) < 0)
         return AVERROR(ENOMEM);
     pkt->pts = av_gettime();
+
+    if(gdigrab->use_captureblt)
+       flag |= CAPTUREBLT;
 
     /* Blit screen grab */
     if (!BitBlt(dest_hdc, 0, 0,
@@ -652,6 +658,7 @@ static const AVOption options[] = {
     { "video_size", "set video frame size", OFFSET(width), AV_OPT_TYPE_IMAGE_SIZE, {.str = NULL}, 0, 0, DEC },
     { "offset_x", "capture area x offset", OFFSET(offset_x), AV_OPT_TYPE_INT, {.i64 = 0}, INT_MIN, INT_MAX, DEC },
     { "offset_y", "capture area y offset", OFFSET(offset_y), AV_OPT_TYPE_INT, {.i64 = 0}, INT_MIN, INT_MAX, DEC },
+    { "use_captureblt", "capture gdi window use CAPTTUREBLT flag", OFFSET(use_captureblt), AV_OPT_TYPE_INT, {.i64 = 1}, 0, 1, DEC },
     { NULL },
 };
 
