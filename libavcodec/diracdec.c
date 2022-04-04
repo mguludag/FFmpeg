@@ -32,6 +32,7 @@
 #include "avcodec.h"
 #include "get_bits.h"
 #include "bytestream.h"
+#include "codec_internal.h"
 #include "internal.h"
 #include "golomb.h"
 #include "dirac_arith.h"
@@ -1432,8 +1433,8 @@ static void global_mv(DiracContext *s, DiracBlock *block, int x, int y, int ref)
     int *c      = s->globalmc[ref].perspective;
 
     int64_t m   = (1<<ep) - (c[0]*(int64_t)x + c[1]*(int64_t)y);
-    int64_t mx  = m * (int64_t)((A[0][0] * (int64_t)x + A[0][1]*(int64_t)y) + (1LL<<ez) * b[0]);
-    int64_t my  = m * (int64_t)((A[1][0] * (int64_t)x + A[1][1]*(int64_t)y) + (1LL<<ez) * b[1]);
+    int64_t mx  = m * (uint64_t)((A[0][0] * (int64_t)x + A[0][1]*(int64_t)y) + (1LL<<ez) * b[0]);
+    int64_t my  = m * (uint64_t)((A[1][0] * (int64_t)x + A[1][1]*(int64_t)y) + (1LL<<ez) * b[1]);
 
     block->u.mv[ref][0] = (mx + (1<<(ez+ep))) >> (ez+ep);
     block->u.mv[ref][1] = (my + (1<<(ez+ep))) >> (ez+ep);
@@ -2355,16 +2356,16 @@ static int dirac_decode_frame(AVCodecContext *avctx, void *data, int *got_frame,
     return buf_idx;
 }
 
-const AVCodec ff_dirac_decoder = {
-    .name           = "dirac",
-    .long_name      = NULL_IF_CONFIG_SMALL("BBC Dirac VC-2"),
-    .type           = AVMEDIA_TYPE_VIDEO,
-    .id             = AV_CODEC_ID_DIRAC,
+const FFCodec ff_dirac_decoder = {
+    .p.name         = "dirac",
+    .p.long_name    = NULL_IF_CONFIG_SMALL("BBC Dirac VC-2"),
+    .p.type         = AVMEDIA_TYPE_VIDEO,
+    .p.id           = AV_CODEC_ID_DIRAC,
     .priv_data_size = sizeof(DiracContext),
     .init           = dirac_decode_init,
     .close          = dirac_decode_end,
     .decode         = dirac_decode_frame,
-    .capabilities   = AV_CODEC_CAP_DELAY | AV_CODEC_CAP_SLICE_THREADS | AV_CODEC_CAP_DR1,
+    .p.capabilities = AV_CODEC_CAP_DELAY | AV_CODEC_CAP_SLICE_THREADS | AV_CODEC_CAP_DR1,
     .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
     .flush          = dirac_decode_flush,
 };
